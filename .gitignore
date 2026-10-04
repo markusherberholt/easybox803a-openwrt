@@ -1,0 +1,11 @@
+# Private router data and generated artifacts
+.config
+*.key
+*.tar
+*.tar.gz
+*.zip
+*.bin
+*.img
+*.log
+/private/
+*backup*

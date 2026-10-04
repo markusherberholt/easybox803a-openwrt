@@ -1,0 +1,63 @@
+Subject: [PATCH] MIPS: lantiq: fix ARV752DPW22 boot and switch reset
+
+The BRN image is loaded at 0x80002000. A temporary stack at
+0x80004000 overlaps the growing U-Boot image and can corrupt bootm state.
+Allow a board-specific stack offset and use 0x40000 for ARV752DPW22 BRN.
+
+Direct LZMA decompression from the memory-mapped NOR flash stalls on this
+board. For NOR and BRN builds, copy 4 MiB from the firmware partition to
+the normal RAM load address before bootm. Keep the UART RAM build without
+automatic boot.
+
+Release the external AR8216 reset on GPIO19 before Ethernet probing.
+
+--- a/arch/mips/include/asm/arch-danube/config.h
++++ b/arch/mips/include/asm/arch-danube/config.h
+@@ -57,7 +57,9 @@
+ #define CONFIG_SYS_MEMTEST_END		0x82000000
+ #define CONFIG_SYS_LOAD_ADDR		0x81000000
+ #define CONFIG_SYS_LOAD_SIZE		(2 * 1024 * 1024)
+-#define CONFIG_SYS_INIT_SP_OFFSET	0x4000
++#ifndef CONFIG_SYS_INIT_SP_OFFSET
++#define CONFIG_SYS_INIT_SP_OFFSET 0x4000
++#endif
+ 
+ /* SRAM */
+ #define CONFIG_SYS_SRAM_BASE		0xBE1A0000
+--- a/include/configs/arv752dpw22.h
++++ b/include/configs/arv752dpw22.h
+@@ -39,6 +39,7 @@
+ 
+ /* Burnboot loadable image */
+ #if defined(CONFIG_SYS_BOOT_BRN)
++#define CONFIG_SYS_INIT_SP_OFFSET 0x40000
+ #define CONFIG_SYS_TEXT_BASE		0x80002000
+ #define CONFIG_SKIP_LOWLEVEL_INIT
+ #define CONFIG_SYS_DISABLE_CACHE
+@@ -59,6 +60,11 @@
+ /* Pull in default OpenWrt configs for Lantiq SoC */
+ #include "openwrt-lantiq-common.h"
+ 
++#if !defined(CONFIG_SYS_BOOT_RAM)
++#undef CONFIG_BOOTCOMMAND
++#define CONFIG_BOOTCOMMAND "cp.b ${kernel_addr} ${loadaddr} 0x400000; bootm ${loadaddr}"
++#endif
++
+ #define CONFIG_ENV_UPDATE_UBOOT_NOR		\
+ 	"update-uboot-nor=run load-uboot-nor write-uboot-nor\0"
+ 
+--- a/board/arcadyan/arv752dpw22/arv752dpw22.c
++++ b/board/arcadyan/arv752dpw22/arv752dpw22.c
+@@ -37,6 +37,12 @@
+ 
+ int board_eth_init(bd_t *bis)
+ {
++	unsigned int switch_reset_gpio = gpio_to_gpio(1, 3);
++
++	puts("ARV752DPW22: releasing AR8216 reset on GPIO19\n");
++	gpio_direction_output(switch_reset_gpio, 1);
++
++	puts("ARV752DPW22: initializing U-Boot Ethernet\n");
+ 	return ltq_eth_initialize(&eth_board_config);
+ }
+ 

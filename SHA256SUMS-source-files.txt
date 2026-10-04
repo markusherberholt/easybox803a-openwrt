@@ -1,0 +1,4 @@
+9e8412928b3222de85dcd8866248297259056aabdaca665e664fe63cd26f0a65  config/openwrt-19.07.2-arv752dpw22.config
+e3c85ff338a56cc52fa072d7f708772377578ec1075b682387ff675d8817b0b5  patches/openwrt/0001-lantiq-arv752dpw22-add-cca3-bootarg.patch
+caa13dead094a6b1f56b36fa169fcd0115b61a0e36ea7b1664bad90ac7c4a5a8  patches/openwrt/0002-linux-firmware-skip-qca99x0-board-download.patch
+b74a69f616d5af9f683935280ade4a09fdf43e32e42f82e8ab004d703a232c1a  patches/u-boot/0300-arv752dpw22-stack-switch-and-ramboot.patch
